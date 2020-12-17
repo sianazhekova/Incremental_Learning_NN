@@ -10,6 +10,7 @@ ConvNN2D = partial(layers.Conv2D,
                         kernel_size=3, activation='relu', padding="SAME")
 
 MaxPool2DPartial = partial(layers.MaxPooling2D, pool_size=2)
+AvrPool2DPartial = partial(layers.AveragePooling2D, pool_size=(2, 2), strides=None, padding='valid', data_format=None)
 
 device_name = tf.test.gpu_device_name()
 if device_name != '/device:GPU:0':
@@ -29,6 +30,9 @@ c10_y_train, c10_y_valid = c10_y_train[:-5000], c10_y_train[-5000:]
 class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
                'dog', 'frog', 'horse', 'ship', 'truck']
 
+#Data Augmentation functions
+def 
+
 #copied the plot_figure() code from tensorflow website to visualise image classes, will probably delete it later
 def plot_figure(num_images=25, fig_size=10):
     plt.figure(figsize=(fig_size,fig_size))
@@ -46,26 +50,35 @@ def plot_figure(num_images=25, fig_size=10):
         plt.xlabel(class_names[train_labels[i][0]])
     plt.show()
 
-def plot_accuracy_epoch(history, model):
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.plot(history.history['val_accuracy'], label='val_accuracy')
-    plt.xlabel('Epoch number')
-    plt.ylabel('Accuracy')
-    plt.ylim([0.5, 1])
-    plt.legend*(loc='lower right')
+def plot_accuracy_loss_epoch(history, model, num_epochs, loss_option=True):
+    train_loss_score = history.history['loss']
+    validation_loss_score = history.history['val_loss']
+    
+    train_acc_score = history.history['accuracy']
+    validation_acc_score = history.history['val_accuracy']
+
+    x_axis_epochs = range(num_epochs)
+    plt.figure(figsize=(9,9))
+    plt.subplot(1,2,1)
+    plt.plot(x_axis_epochs, train_acc_score, label='Training Accuracy')
+    plt.plot(x_axis_epochs, validation_acc_score, label='Validation Accuracy')
+    plt.legend(loc='upper left')
+    plt.title('Training and Validation Accuracy vs Number of Epochs')
+
+    plt.subplot(1,2,2)
+    plt.plot(x_axis_epochs, train_loss_score, label='Training Loss')
+    plt.plot(x_axis_epochs, validation_loss_score, label='Validation Loss')
+    plt.legend(loc='lower left')
+    plt.title('Training and Validation Loss vs Number of Epochs')
+    plt.show()
 
 class NaiveCNN:
-    def initialise_datasets(self, import_dataset_fun, ):
-    
-    def compile_fit_model(self, loss_fun="sparse_categorical_crossentropy", select_optimizer="nadam", metrics_options=["accuracy"]):
-        self.model.compile(loss=loss_fun, optimizer=select_optimizer, metrics=metrics_options)   #try with "adam" optimiser as well, metrics = ["sparse_categorical_accuracy"]
-        """model.compile(optimizer='adam', SparseCategoricalCrossentropy(from_logits=True),
-            metrics=['accuracy'])"""
-        self.history = self.model.fit(self.X_train, self.y_train, epochs = 10, validation_data=(self.X_valid, self.y_valid))
-        self.test_score = self.model.evaluate(self.X_test, self.y_test, verbose=2)  #test_loss,test_acc
-        #y_pred = self.model.predict(self.X_test)
+    def initialise_datasets(self, import_ds, data_augment=True):
+        X_train, y_train, self.X_test, self.y_test = import_ds()
+        self.X_train, self.X_valid = X_train[:-5000], X_train[-5000:]
+        self.y_train, self.y_valid = y_train[:-5000], y_train[-5000:]
 
-    def construct_cnn_v1(self, opt_GPU=True, *activation_args=('relu', 'relu', 'softmax'), *units=(128, 64, 10), loss_fun="sparse_categorical_crossentropy", select_optimizer="nadam", metrics_options=["accuracy"]):
+    def construct_cnn_v1(opt_GPU=True, *activation_args=('relu', 'relu', 'softmax'), *units=(128, 64, 10), loss_fun="sparse_categorical_crossentropy", select_optimizer="nadam", metrics_options=["accuracy"]):
         n = len(activation_args)
         assert(n == len(units))
         model = models.Sequential([
@@ -83,18 +96,29 @@ class NaiveCNN:
                 if i != (n-1):
                     model.add(layers.Dropout(0.5))
         ])
-        #model.summary() -> to check output dimensionality
+        model.summary() #-> to check output dimensionality
+        return model
 
+    def compile_fit_model(self, loss_fun="sparse_categorical_crossentropy", select_optimizer="nadam", metrics_options=["accuracy"], plot_verbose=True, loss_option=True):
+        self.model.compile(loss=loss_fun, optimizer=select_optimizer, metrics=metrics_options)   #try with "adam" optimiser as well, metrics = ["sparse_categorical_accuracy"]
+        """model.compile(optimizer='adam', SparseCategoricalCrossentropy(from_logits=True),
+            metrics=['accuracy'])"""
+        self.history = self.model.fit(self.X_train, self.y_train, epochs = 10, validation_data=(self.X_valid, self.y_valid))
+        self.test_score = self.model.evaluate(self.X_test, self.y_test, verbose=2)  #test_loss,test_acc -> will need these for the sequential class addition performance evaluation
+        #y_pred = self.model.predict(self.X_test)
+        if plot_verbose:
+            plot_accuracy_loss_epoch(self.history, self.model, num_epochs, loss_option)
+
+
+    def compile_fit_GPU(self, opt_GPU, loss_fun="sparse_categorical_crossentropy", select_optimizer="nadam", metrics_options=["accuracy"]), plot_verbose=True:
         if opt_GPU:
             with tf.device('/device:GPU:0'):
-                compile_fit_model()
+                compile_fit_model(loss_fun, select_optimizer, metrics_options, plot_verbose)
         else:
-            compile_fit_model()
+            compile_fit_model(loss_fun, select_optimizer, metrics_options, plot_verbose)
 
-    def __init__(self, opt_GPU=True, *activation_args=('relu', 'relu', 'softmax'), *units=(128, 64, 10), loss_fun="sparse_categorical_crossentropy", select_optimizer="nadam", metrics_options=["accuracy"]):
-        self.model = 
-
-
+    def __init__(self, construct_cnn = construct_cnn_v1, opt_GPU=True, *activation_args=('relu', 'relu', 'softmax'), *units=(128, 64, 10)):
+        self.model = construct_cnn(opt_GPU, *activation_args, *units, loss_fun, select_optimizer, metrics_options)
 
 
 """ TODO: 1. Implement a slightly different ordering of the layers for the CNN construction 
@@ -104,6 +128,7 @@ class NaiveCNN:
 """
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='')
+    parser = argparse.ArgumentParser(description='Supply naive CNN with hyper-parameter configuration & options')
+    parser.add_argument('-', '--', ) 
 
     
