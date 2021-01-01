@@ -1,3 +1,4 @@
+import os,sys
 import argparse
 import tensorflow as tf
 import tensorflow_addons as tfa
@@ -6,7 +7,9 @@ from tensorflow.keras import datasets, layers, models, losses, optimizers
 import matplotlib.pyplot as plt
 from functools import partial
 
-import dataset
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
+from .. import dataset
 
 # Global variables field
 ConvNN2D = partial(layers.Conv2D,
@@ -65,11 +68,10 @@ class NaiveCNN:
             ConvNN2D(filters=256),
             layers.MaxPooling2D(pool_size=2),
             layers.Flatten()])  #Flatten (unroll) the 2D output to 1D
-            for i in range(n):
-                model.add(layers.Dense(units= units[i], activation=activation_args[i]))
-                if i != (n-1):
-                    model.add(layers.Dropout(0.5))
-        ])
+        for i in range(n):
+            model.add(layers.Dense(units= units[i], activation=activation_args[i]))
+            if i != (n-1):
+                model.add(layers.Dropout(0.5))
         model.summary() #-> to check output dimensionality
         return model
 
@@ -103,7 +105,7 @@ class NaiveCNN:
 
     def compile_fit_GPU(self, opt_GPU=False, loss_fun=args.loss_fun, select_optimizer=args.optimizer, metrics_options=[args.metrics], num_epochs=args.num_epochs, plot_verbose=True):
         if select_optimizer == "SGDW":  # lr = 0.1 , momentum = , weight_decay = , epoch_num = 200
-            lr = args.lr
+            lr = args.learning_rate
             len_ds = len(X_train)+len(X_valid)+len(X_test)+len(y_train)+len(y_valid)+len(y_test)
             num_steps = 80*(len_ds/args.batch_size)
             select_optimizer = tfa.optimizers.SGDW(learning_rate=optimizers.schedules.PiecewiseConstantDecay(boundaries=[num_steps, num_steps], values=[lr, (lr + 0.1), (lr + 0.2)]), momentum=args.momentum, weight_decay=args.weight_decay) #TODO: for SGDW, loss_fun should be sparse categorical cross-entropy(?)
@@ -124,6 +126,7 @@ def args_parse():
     #The parameters for our model compilation
     compile_env = parser.add_argument_group(title="Model Compilation")
     compile_env.add_argument('--optimizer', '-o', default='adam', type=str, help='')
+    compile_env.add_argument('--learning-rate', '-lr', default=1.0, type=float, help='')
     compile_env.add_argument('--loss-fn', '-lf', default='sparse_categorical_crossentropy', type=str, help='')
     compile_env.add_argument('--metrics', '-me', default='sparse_categorical_accuracy', type=str, help='')
     compile_env.add_argument('--momentum', '-mo', default=1, type=float, help='')
