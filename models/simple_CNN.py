@@ -87,7 +87,7 @@ class NaiveCNN:
     def compile_fit_model(self, loss_fun, select_optimizer, metrics_options, num_epochs, plot_verbose=True, loss_option=True):
         #try with "adam" optimiser as well, metrics = ["sparse_categorical_accuracy"]
         self.model.compile(optimizer=select_optimizer, loss=loss_fun, metrics=metrics_options)
-        self.history = self.model.fit(self.train_iter, epochs = num_epochs, validation_data=(self.valid_iter))
+        self.history = self.model.fit_generator(self.train_iter, epochs = num_epochs, validation_data=(self.valid_iter))
         self.test_score = self.model.evaluate(self.X_test, self.y_test, verbose=2)  #test_loss,test_acc -> will need these for the sequential class addition performance evaluation
         
         if plot_verbose:
@@ -103,11 +103,11 @@ class NaiveCNN:
             #len_ds = len(X_train)+len(X_valid)+len(X_test)+len(y_train)+len(y_valid)+len(y_test)
             #num_steps = 80*(len_ds/args.batch_size)
             num_steps = 80 * int(self.X_train.shape[0]/args.batch_size)
-            select_optimizer = tfa.optimizers.SGDW(learning_rate=optimizers.schedules.PiecewiseConstantDecay(boundaries=[num_steps, num_steps], values=[lr, (lr + 0.1), (lr + 0.2)]), momentum=args.momentum, weight_decay=args.weight_decay) #TODO: for SGDW, loss_fun should be sparse categorical cross-entropy(?)
+            select_optimizer = tfa.optimizers.SGDW(learning_rate=optimizers.schedules.PiecewiseConstantDecay(boundaries=[num_steps, num_steps], values=[lr, (lr*0.1), (lr*0.1)]), momentum=args.momentum, weight_decay=args.weight_decay) #TODO: for SGDW, loss_fun should be sparse categorical cross-entropy(?)
         if select_optimizer == "SGD":
             lr = args.learning_rate
             num_steps = 80 * int(self.X_train.shape[0]/args.batch_size)
-            select_optimizer = optimizers.SGD(learning_rate=optimizers.schedules.PiecewiseConstantDecay(boundaries=[num_steps, num_steps], values=[lr, (lr + 0.1), (lr + 0.2)]), momentum=args.momentum)
+            select_optimizer = optimizers.SGD(learning_rate=optimizers.schedules.PiecewiseConstantDecay(boundaries=[num_steps, num_steps], values=[lr, (lr*0.1), (lr*0.1)]), momentum=args.momentum)
         if self.opt_GPU:
             with tf.device('/device:GPU:0'):
                 self.compile_fit_model(loss_fun, select_optimizer, metrics_options, plot_verbose)
