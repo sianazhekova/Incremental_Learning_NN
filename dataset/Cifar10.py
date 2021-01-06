@@ -55,8 +55,7 @@ class CIFAR10:
     def get_data_generator(cls, X_train, y_train, X_valid, y_valid):
         generator = ImageDataGenerator(width_shift_range=0.1, height_shift_range=0.1, horizontal_flip=True)
         train_iter = generator.flow(X_train, y_train, batch_size=cls.batch_size)
-        valid_iter = generator.flow(X_valid, y_valid, batch_size=cls.batch_size)
 
-        return generator, train_iter, valid_iter
+        return generator, train_iter
 
         
