@@ -47,7 +47,7 @@ class CIFAR10:
     @classmethod
     def import_data(cls):
         X_train, X_valid, X_test, y_train, y_valid, y_test = cls.prepare_data()
-        X_train, X_valid, X_test = scale_pixels(X_train, X_valid, X_test)
+        X_train, X_valid, X_test = cls.scale_pixels(X_train, X_valid, X_test)
 
         return X_train, y_train, X_valid, y_valid, X_test, y_test
 

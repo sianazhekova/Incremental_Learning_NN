@@ -84,7 +84,7 @@ class NaiveCNN:
         model.summary()
         return model
 
-    def compile_fit_model(self, loss_fun, select_optimizer, metrics_options, num_epochs, plot_verbose, loss_option):
+    def compile_fit_model(self, loss_fun, select_optimizer, metrics_options, num_epochs, plot_verbose=True, loss_option=True):
         #try with "adam" optimiser as well, metrics = ["sparse_categorical_accuracy"]
         self.model.compile(optimizer=select_optimizer, loss=loss_fun, metrics=metrics_options)
         self.history = self.model.fit(self.train_iter, epochs = num_epochs, validation_data=(self.valid_iter))
@@ -94,7 +94,10 @@ class NaiveCNN:
             plot_accuracy_loss_epoch(self.history, self.model, num_epochs, loss_option)
 
     def compile_fit_GPU(self,  plot_verbose=True):
-        loss_fun = self.args.loss_fun, select_optimizer=args.optimizer, metrics_options=[args.metrics], num_epochs=args.num_epochs
+        loss_fun = self.args.loss_fn 
+        select_optimizer = self.args.optimizer
+        metrics_options = [self.args.metrics]
+        num_epochs = self.args.num_epochs
         if select_optimizer == "SGDW":  # lr = 0.1 , momentum = 0.9, weight_decay = 10^(-4) , epoch_num = 200
             lr = args.learning_rate
             #len_ds = len(X_train)+len(X_valid)+len(X_test)+len(y_train)+len(y_valid)+len(y_test)
@@ -107,27 +110,20 @@ class NaiveCNN:
             select_optimizer = optimizers.SGD(learning_rate=optimizers.schedules.PiecewiseConstantDecay(boundaries=[num_steps, num_steps], values=[lr, (lr + 0.1), (lr + 0.2)]), momentum=args.momentum)
         if self.opt_GPU:
             with tf.device('/device:GPU:0'):
-                compile_fit_model(loss_fun, select_optimizer, metrics_options, plot_verbose)
+                self.compile_fit_model(loss_fun, select_optimizer, metrics_options, plot_verbose)
         else:
-            compile_fit_model(loss_fun, select_optimizer, metrics_options, plot_verbose)
+            self.compile_fit_model(loss_fun, select_optimizer, metrics_options, plot_verbose)
 
     def __init__(self, GPU, args, ds_class_name):
-        self.X_train = None
-        self.y_train = None
-        self.X_valid = None 
-        self.y_valid = None 
-        self.X_test = None
-        self.y_test = None
         
-        self.dataset = None
-        self.num_channels = None
-        self.img_height = None
-        self.img_width = None
+        self.X_train, self.y_train, self.X_valid, self.y_valid, self.X_test, self.y_test = ds_class_name.import_data()
+        self.dataset = ds_class_name.dataset_name
+        self.num_channels = ds_class_name.get_num_channels()
+        self.img_height = ds_class_name.height
+        self.img_width = ds_class_name.width
 
-        self.data_generator= None
-        self.train_iter = None 
-        self.valid_iter = None
-        
+        self.data_generator, self.train_iter, self.valid_iter = ds_class_name.get_data_generator(self.X_train, self.y_train, self.X_valid, self.y_valid)
+
         self.model = self.construct_cnn_v2()
         self.opt_GPU = GPU
         self.args = args
@@ -137,13 +133,6 @@ class NaiveCNN:
                 raise SystemError('GPU device not found')
             print('Found GPU at: {}'.format(device_name))
 
-        self.X_train, self.y_train, self.X_valid, self.y_valid, self.X_test, self.y_test = ds_class_name.import_data()
-        self.dataset = ds_class_name.dataset_name
-        self.num_channels = ds_class_name.get_num_channels()
-        self.img_height = ds_class_name.height
-        self.img_width = ds_class_name.width
-
-        self.data_generator, self.train_iter, self.valid_iter = ds_class_name.get_data_generator(self.X_train, self.y_train, self.X_valid, self.y_valid)
 
 def args_parse():
     parser = argparse.ArgumentParser(description='Supply naive CNN with hyper-parameter configuration & options')
@@ -173,7 +162,7 @@ if __name__ == "__main__":
     args = args_parse()
 
     naiveCNN = NaiveCNN(GPU=False, args=args, ds_class_name=dataset.Cifar10.CIFAR10)
-    naiveCNN.model.compile_fit_GPU()
+    naiveCNN.compile_fit_GPU()
     test_loss, test_acc = naiveCNN.test_score
     print(f"The Loss for our model & test dataset is {test_loss} and the Accuracy for our model & test dataset is {test_acc} ")
 
