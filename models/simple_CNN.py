@@ -13,6 +13,7 @@ print(tf.__version__)
 import dataset
 from dataset import Cifar10
 
+
 # Global variables field
 ConvNN2D = partial(layers.Conv2D, kernel_size=3, activation='relu', padding="SAME")
 
@@ -66,9 +67,9 @@ class NaiveCNN:
         model.summary() #-> to check output dimensionality
         return model
 
-    def construct_cnn_v2(self, **kwargs):
+    def construct_cnn_v2(self):
         model = models.Sequential([
-            ConvNN2D(filters=64, kernel_size=3, input_shape=[kwargs.get('img_h', self.img_height),kwargs.get('img_w', self.img_width), kwargs.get('num_ch', self.num_channels)]),
+            ConvNN2D(filters=64, kernel_size=3, input_shape=[self.img_height, self.img_width, self.num_channels]),
             ConvNN2D(filters=64, kernel_size=3),
             ConvNN2D(filters=128, kernel_size=3, strides=2),
             ConvNN2D(filters=128, kernel_size=3),
@@ -87,7 +88,8 @@ class NaiveCNN:
     def compile_fit_model(self, loss_fun, select_optimizer, metrics_options, num_epochs, plot_verbose=True, loss_option=True):
         #try with "adam" optimiser as well, metrics = ["sparse_categorical_accuracy"]
         self.model.compile(optimizer=select_optimizer, loss=loss_fun, metrics=metrics_options)
-        self.history = self.model.fit_generator(self.train_iter, epochs = num_epochs, validation_data=(self.valid_iter))
+        print(f"The length of the training dataset numpyarray iterator is {self.train_iter.__len__()}")
+        self.history = self.model.fit_generator(self.train_iter, epochs = num_epochs, validation_data=(self.X_valid, self.y_valid))
         self.test_score = self.model.evaluate(self.X_test, self.y_test, verbose=2)  #test_loss,test_acc -> will need these for the sequential class addition performance evaluation
         
         if plot_verbose:
@@ -122,7 +124,7 @@ class NaiveCNN:
         self.img_height = ds_class_name.height
         self.img_width = ds_class_name.width
 
-        self.data_generator, self.train_iter, self.valid_iter = ds_class_name.get_data_generator(self.X_train, self.y_train, self.X_valid, self.y_valid)
+        self.data_generator, self.train_iter = ds_class_name.get_data_generator(self.X_train, self.y_train, self.X_valid, self.y_valid)
 
         self.model = self.construct_cnn_v2()
         self.opt_GPU = GPU
@@ -141,8 +143,8 @@ def args_parse():
     compile_env = parser.add_argument_group(title="Model Compilation")
     compile_env.add_argument('--optimizer', '-o', default='adam', type=str, help='Choice of an optimzer to use when compiling the model during training and validation')
     compile_env.add_argument('--learning-rate', '-lr', default=0.1, type=float, help='Select a learning rate for the model to use when updating weights during training')
-    compile_env.add_argument('--loss-fn', '-lf', default='sparse_categorical_crossentropy', type=str, help='Choise of a loss function to minimise and use during update step')
-    compile_env.add_argument('--metrics', '-me', default='sparse_categorical_accuracy', type=str, help='Metric to use for model compilation')
+    compile_env.add_argument('--loss-fn', '-lf', default='categorical_crossentropy', type=str, help='Choise of a loss function to minimise and use during update step')
+    compile_env.add_argument('--metrics', '-me', default='categorical_accuracy', type=str, help='Metric to use for model compilation')
     compile_env.add_argument('--momentum', '-mo', default=0.9, type=float, help='Momentum value to use in the special case of a Stochastic Gradient Descent with weight decay')
     compile_env.add_argument('--weight_decay', '-wd', default=1, type=float, help='Weight decay value to use in the special case of a Stocastic Gradient Descent with weight decay')
 
