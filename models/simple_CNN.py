@@ -12,6 +12,8 @@ print(tf.__version__)
 
 import dataset
 from dataset import Cifar10
+from tensorflow.keras.callbacks import History 
+
 
 
 # Global variables field
@@ -24,8 +26,8 @@ def plot_accuracy_loss_epoch(history, model, num_epochs, loss_option=True):
     train_loss_score = history.history['loss']
     validation_loss_score = history.history['val_loss']
     
-    train_acc_score = history.history['accuracy']
-    validation_acc_score = history.history['val_accuracy']
+    train_acc_score = history.history['categorical_accuracy']
+    validation_acc_score = history.history['val_categorical_accuracy']
 
     x_axis_epochs = range(num_epochs)
     plt.figure(figsize=(9,9))
@@ -80,7 +82,8 @@ class NaiveCNN:
             layers.Dropout(0.5),
             ConvNN2D(filters=192, kernel_size=3),
             AvrPool2DPartial(), # how do i apply kernel_size=8
-            ConvNN2D(filters=10, kernel_size=1, padding="valid")
+            layers.Flatten(),
+            layers.Dense(units=10, activation='relu')
         ])
         model.summary()
         return model
@@ -89,13 +92,13 @@ class NaiveCNN:
         #try with "adam" optimiser as well, metrics = ["sparse_categorical_accuracy"]
         self.model.compile(optimizer=select_optimizer, loss=loss_fun, metrics=metrics_options)
         print(f"The length of the training dataset numpyarray iterator is {self.train_iter.__len__()}")
-        self.history = self.model.fit_generator(self.train_iter, epochs = num_epochs, validation_data=(self.X_valid, self.y_valid))
+        self.history = self.model.fit(self.train_iter, epochs = num_epochs, validation_data=(self.X_valid, self.y_valid), callbacks=[self.history])
         self.test_score = self.model.evaluate(self.X_test, self.y_test, verbose=2)  #test_loss,test_acc -> will need these for the sequential class addition performance evaluation
-        
+        print(self.history.history.keys())
         if plot_verbose:
             plot_accuracy_loss_epoch(self.history, self.model, num_epochs, loss_option)
 
-    def compile_fit_GPU(self,  plot_verbose=True):
+    def compile_fit_GPU(self, plot_verbose=True):
         loss_fun = self.args.loss_fn 
         select_optimizer = self.args.optimizer
         metrics_options = [self.args.metrics]
@@ -129,6 +132,7 @@ class NaiveCNN:
         self.model = self.construct_cnn_v2()
         self.opt_GPU = GPU
         self.args = args
+        self.history = History()
         if self.opt_GPU:
             device_name = tf.test.gpu_device_name()
             if device_name != '/device:GPU:0':
