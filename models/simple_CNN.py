@@ -2,6 +2,9 @@ import os,sys
 import argparse
 import tensorflow as tf
 import tensorflow_addons as tfa
+from google.colab import drive
+drive.mount("/content/gdrive", force_remount=True)
+sys.path.append("/content/gdrive/My Drive/IncrementalNN")
 
 from tensorflow.keras import datasets, layers, models, losses, optimizers
 import matplotlib.pyplot as plt
@@ -13,7 +16,6 @@ print(tf.__version__)
 import dataset
 from dataset import Cifar10
 from tensorflow.keras.callbacks import History 
-
 
 
 # Global variables field
@@ -47,43 +49,29 @@ def plot_accuracy_loss_epoch(history, model, num_epochs, loss_option=True):
 
 class NaiveCNN:
 
-    def construct_cnn_v1(self, act_args_units=['relu', 'relu', 'softmax', 128, 64, 10]):
-        n = len(act_args_units)//2
-        activation_args = act_args_units[:n]
-        units = act_args_units[n:]
-        assert(n == len(units))
-        model = models.Sequential([
-            ConvNN2D(filters=64, kernel_size=7, input_shape=[self.img_height, self.img_width, self.num_channels]), #format of cifar images = (32, 32, 3)
-            layers.MaxPooling2D(pool_size=2),
-            ConvNN2D(filters=128),
-            ConvNN2D(filters=128),
-            layers.MaxPooling2D(pool_size=2),
-            ConvNN2D(filters=256),
-            ConvNN2D(filters=256),
-            layers.MaxPooling2D(pool_size=2),
-            layers.Flatten()])  #Flatten (unroll) the 2D output to 1D
-        for i in range(n):
-            model.add(layers.Dense(units= units[i], activation=activation_args[i]))
-            if i != (n-1):
-                model.add(layers.Dropout(0.5))
-        model.summary() #-> to check output dimensionality
-        return model
-
     def construct_cnn_v2(self):
         model = models.Sequential([
             ConvNN2D(filters=64, kernel_size=3, input_shape=[self.img_height, self.img_width, self.num_channels]),
+            layers.BatchNormalization(),
             ConvNN2D(filters=64, kernel_size=3),
+            layers.BatchNormalization(),
             ConvNN2D(filters=128, kernel_size=3, strides=2),
+            layers.BatchNormalization(),
             ConvNN2D(filters=128, kernel_size=3),
+            layers.BatchNormalization(),
             layers.Dropout(0.5),
             ConvNN2D(filters=128, kernel_size=3),
+            layers.BatchNormalization(),
             ConvNN2D(filters=192, kernel_size=3, strides=2),
+            layers.BatchNormalization(),
             ConvNN2D(filters=192, kernel_size=3),
+            layers.BatchNormalization(),
             layers.Dropout(0.5),
             ConvNN2D(filters=192, kernel_size=3),
-            AvrPool2DPartial(), # how do i apply kernel_size=8
+            layers.BatchNormalization(),
+            AvrPool2DPartial(),
             layers.Flatten(),
-            layers.Dense(units=10, activation='relu')
+            layers.Dense(units=10, activation='softmax')
         ])
         model.summary()
         return model
@@ -103,6 +91,9 @@ class NaiveCNN:
         select_optimizer = self.args.optimizer
         metrics_options = [self.args.metrics]
         num_epochs = self.args.num_epochs
+        if select_optimizer == "adam":
+          lr = args.learning_rate #0.01
+          select_optimizer = optimizers.Adam(learning_rate=lr)
         if select_optimizer == "SGDW":  # lr = 0.1 , momentum = 0.9, weight_decay = 10^(-4) , epoch_num = 200
             lr = args.learning_rate
             #len_ds = len(X_train)+len(X_valid)+len(X_test)+len(y_train)+len(y_valid)+len(y_test)
@@ -115,9 +106,9 @@ class NaiveCNN:
             select_optimizer = optimizers.SGD(learning_rate=optimizers.schedules.PiecewiseConstantDecay(boundaries=[num_steps, num_steps], values=[lr, (lr*0.1), (lr*0.1)]), momentum=args.momentum)
         if self.opt_GPU:
             with tf.device('/device:GPU:0'):
-                self.compile_fit_model(loss_fun, select_optimizer, metrics_options, plot_verbose)
+                self.compile_fit_model(loss_fun, select_optimizer, metrics_options, num_epochs, plot_verbose)
         else:
-            self.compile_fit_model(loss_fun, select_optimizer, metrics_options, plot_verbose)
+            self.compile_fit_model(loss_fun, select_optimizer, metrics_options, num_epochs, plot_verbose)
 
     def __init__(self, GPU, args, ds_class_name):
         
@@ -146,7 +137,7 @@ def args_parse():
     #The parameters for our model compilation
     compile_env = parser.add_argument_group(title="Model Compilation")
     compile_env.add_argument('--optimizer', '-o', default='adam', type=str, help='Choice of an optimzer to use when compiling the model during training and validation')
-    compile_env.add_argument('--learning-rate', '-lr', default=0.1, type=float, help='Select a learning rate for the model to use when updating weights during training')
+    compile_env.add_argument('--learning-rate', '-lr', default=0.01, type=float, help='Select a learning rate for the model to use when updating weights during training')
     compile_env.add_argument('--loss-fn', '-lf', default='categorical_crossentropy', type=str, help='Choise of a loss function to minimise and use during update step')
     compile_env.add_argument('--metrics', '-me', default='categorical_accuracy', type=str, help='Metric to use for model compilation')
     compile_env.add_argument('--momentum', '-mo', default=0.9, type=float, help='Momentum value to use in the special case of a Stochastic Gradient Descent with weight decay')
@@ -163,8 +154,6 @@ def args_parse():
     
 
 if __name__ == "__main__":
-    
-    
     args = args_parse()
 
     naiveCNN = NaiveCNN(GPU=False, args=args, ds_class_name=dataset.Cifar10.CIFAR10)

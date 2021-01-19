@@ -12,7 +12,7 @@ class CIFAR10:
     height = 32
     width = 32
     
-    batch_size = 32 #args.batch_size 
+    batch_size = 256 #args.batch_size 
 
     @staticmethod
     def get_default_num_classes():
