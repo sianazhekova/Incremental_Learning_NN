@@ -27,10 +27,9 @@ class IncrementalComparator:
     
     @staticmethod
     def increment_class_set(ds_class_name, model, labels, new_labels, loss_arr, acc_arr):
-        model.update_iterators(*ds_class_name.get_iterators(new_labels))
-        model.update_test_set(*ds_class_name.get_test_set(labels))
+        model.update_iterators_test_set(ds_class_name, labels, new_labels)
 
-        model.compile_fit_GPU(num_epochs=50, plot_verbose=False)
+        model.fit_GPU(num_epochs=50, plot_verbose=False)
         base_test_loss, base_test_acc = model.get_test_loss_acc()
         loss_arr.append(base_test_loss)
         acc_arr.append(base_test_acc)
@@ -59,11 +58,9 @@ class IncrementalComparator:
             new_class = label_generator.next()
             labels.append(new_class)
         print(labels)
-        
-        model.update_iterators(*ds_class.get_iterators(labels))
-        model.update_test_set(*ds_class.get_test_set(labels))
+        model.update_iterators_test_set(ds_class, labels, labels)
 
-        model.compile_fit_GPU(num_epochs=200, plot_verbose=False)
+        model.fit_GPU(num_epochs=200, plot_verbose=False)
         base_test_loss, base_test_acc = model.get_test_loss_acc()
         loss_arr = [base_test_loss]
         acc_arr = [base_test_acc]
@@ -94,9 +91,3 @@ class IncrementalComparator:
         cls.plot_acc_loss_class(class_arr, acc_arr, loss_arr)
 
 #IncrementalComparator.unit_test(0, 9, 2)
-"""
-naiveCNN_2 = NaiveCNN(GPU=True, ds_class_name=CIFAR100)
-IncrementalComparator.evaluate_class_acc_score(naiveCNN_2, CIFAR100, start_size=10, increment_size=10)
-
-naiveCNN_3 = NaiveCNN(GPU=True, ds_class_name=CIFAR100)
-IncrementalComparator.evaluate_class_acc_score(naiveCNN_3, CIFAR100, start_size=10, increment_size=5)"""

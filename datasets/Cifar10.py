@@ -1,9 +1,4 @@
 import tensorflow as tf
-from tensorflow.keras import datasets, layers
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-
-import tensorflow as tf
 import numpy as np
 import copy
 from tensorflow.keras import datasets, layers
@@ -28,6 +23,12 @@ class CIFAR10(Dataset):
     def scale_pixels(dataset):
         return dataset.astype('float32')/255.0
     
+    @classmethod
+    def custom_dataset_filter(cls, labels_to_keep):
+        """ Filter from the underlying dataset images and labels according using the specified labels argument  """
+        data, labels = cls.filter_dataset(cls.X_train, cls.y_train, labels_to_keep)
+        return data, labels
+
     @classmethod
     def filter_dataset(cls, data, labels, labels_to_keep):
         """Filter a dataset to contain only data with the specified labels."""

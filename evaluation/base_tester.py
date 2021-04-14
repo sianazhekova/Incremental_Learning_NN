@@ -1,0 +1,1 @@
+# An abstract class defining the base classes of testing continual learning for the specified model with the varying confogurations

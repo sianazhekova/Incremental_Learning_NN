@@ -55,6 +55,12 @@ class CIFAR100(Dataset):
         return filtered_data, filtered_labels
     
     @classmethod
+    def custom_dataset_filter(cls, labels_to_keep):
+        """ Filter from the underlying dataset images and labels according using the specified labels argument  """
+        data, labels = cls.filter_dataset(cls.X_train, cls.y_train, labels_to_keep)
+        return data, labels
+
+    @classmethod
     def get_iterators(cls, labels_to_keep):
         """Get training and validation data iterators, which have been filtered
         to only contain data matching the given labels."""
@@ -76,4 +82,3 @@ class CIFAR100(Dataset):
         """Get a filtered test set, only containing data with the given labels."""
         data, labels = cls.filter_dataset(cls.X_test, cls.y_test, labels_to_keep)
         return data, labels
-
