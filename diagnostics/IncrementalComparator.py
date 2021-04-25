@@ -1,5 +1,7 @@
+import matplotlib as plt
 import random
-import numpy as np
+import tensorflow as tf
+
 tf.keras.backend.clear_session
 
 class IncrementalComparator:
@@ -15,7 +17,7 @@ class IncrementalComparator:
         n = random.randint(self.lower_limit, self.M)
         ret_val = self.map.get(n, n)
         self.map[n] = self.map.get(self.M, self.M)
-        self.M-=1
+        self.M -= 1
         return ret_val
     
     @classmethod
@@ -26,7 +28,8 @@ class IncrementalComparator:
             print(model.next())
     
     @staticmethod
-    def increment_class_set(ds_class_name, model, labels, new_labels, loss_arr, acc_arr):
+    def increment_class_set(ds_class_name, model, labels, new_labels, loss_arr, 
+                            acc_arr):
         model.update_iterators_test_set(ds_class_name, labels, new_labels)
 
         model.fit_GPU(num_epochs=50, plot_verbose=False)
@@ -36,7 +39,7 @@ class IncrementalComparator:
     
     @staticmethod
     def plot_acc_loss_class(class_acc, acc_arr, loss_acc=None):
-        plt.figure(figsize=(9,9))
+        plt.figure(figsize=(9, 9))
         plt.plot(class_acc, acc_arr, '-bo', label='Testing Accuracy')
         
         plt.legend(loc='lower right')
@@ -44,13 +47,14 @@ class IncrementalComparator:
         plt.show()
         
     @classmethod
-    def evaluate_class_acc_score(cls, model, ds_class, start_size=2, increment_size=2):
+    def evaluate_class_acc_score(cls, model, ds_class, start_size=2,
+                                increment_size=2):
         random.seed(0)
-        #generator = model.get_data_generator()
+        # generator = model.get_data_generator()
         print("HERE")
         num_classes = ds_class.get_default_num_classes()
         print(f"Default numnber of classes is {num_classes}")
-        lo, hi = 0, (num_classes-1)
+        lo, hi = 0, (num_classes - 1)
 
         label_generator = cls(lo, hi)
         labels = []
@@ -67,7 +71,7 @@ class IncrementalComparator:
         class_arr = [start_size]
 
         diff = (num_classes - start_size)
-        steps =  diff//increment_size
+        steps =  diff // increment_size
         for i in range(steps):
             new_labels = []
             for j in range(increment_size):
@@ -75,19 +79,19 @@ class IncrementalComparator:
                 new_labels.append(new_class)
                 labels.append(new_class)
             print(new_labels)
-            cls.increment_class_set(ds_class, model, labels, new_labels, loss_arr, acc_arr)
-            class_arr.append(start_size + increment_size*(i+1))
+            cls.increment_class_set(ds_class, model, labels, new_labels,
+                                    loss_arr, acc_arr)
+            class_arr.append(start_size + increment_size * (i + 1))
         
-        remaining = diff - steps*increment_size
+        remaining = diff - steps * increment_size
         if (remaining > 0):
             labels = []
             for i in range(remaining):
                 new_class = label_generator.next()
                 new_labels.append(new_class)
                 labels.append(new_class)
-            cls.increment_class_set(ds_class, model, labels, new_labels, loss_arr, acc_arr)
+            cls.increment_class_set(ds_class, model, labels, new_labels,
+                                    loss_arr, acc_arr)
             class_arr.append(num_classes)
         
         cls.plot_acc_loss_class(class_arr, acc_arr, loss_arr)
-
-#IncrementalComparator.unit_test(0, 9, 2)

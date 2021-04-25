@@ -1,1 +1,1 @@
-from .simple_CNN import *
+# from .simple_CNN import *

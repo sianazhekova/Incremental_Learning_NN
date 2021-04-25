@@ -1,5 +1,18 @@
-import math
-from tensorflow.keras import losses
+import sys
+from collections import OrderedDict
+
+import numpy as np
+import tensorflow as tf
+import tensorflow_addons as tfa
+from tensorflow.keras import losses, layers, models, optimizers
+
+from datasets.Cifar10 import CIFAR10
+
+from diagnostics.IncrementalComparator import IncrementalComparator
+from models.naive_cnn import plot_accuracy_loss_epoch
+
+from . import naive_cnn as NaiveCNN
+from models.module_nn import ModuleNN, OptimizerInputError
 
 class iCaRL(ModuleNN):
     
@@ -30,24 +43,28 @@ class iCaRL(ModuleNN):
         return y_star
     
 
-    def iCarl_loss_closure(alpha=1.00, beta=1.00):
+    def iCarl_loss_closure(self, alpha=1.00, beta=1.00):
         """ A Functional Closure for the Model Training Loss via Knowledge Distillation & Prototype Rehearsal """
         
         def iCarl_loss_fn(target_labels, model_outputs):  # y_actual, y_pred
             scalar_classes = tf.math.argmax(target_labels, axis=1)
-            indices = np.isin(scalar_classes, self.new_labels)
+            
+            # TensorFlow does not have a nice substitute for numpy's isin().
+            indices = tf.reduce_any(tf.equal(tf.expand_dims(scalar_classes, 1),
+                                             self.new_labels), axis=1)
 
             # Filter based on whether each model output/class label is from the newly selected class labels
-            old_class_labels = tf.where(np.logical_not(indices), x=target_labels)
-            new_class_labels = tf.where(indices, x=target_labels)
-            pred_old_classes = tf.where(np.logical_not(indices), x=model_outputs)
-            pred_new_classes = tf.where(indices, x=model_outputs)
+            print(~indices, target_labels)
+            old_class_labels = tf.boolean_mask(target_labels, ~indices)
+            new_class_labels = tf.boolean_mask(target_labels, indices)
+            pred_old_classes = tf.boolean_mask(model_outputs, ~indices)
+            pred_new_classes = tf.boolean_mask(model_outputs, indices)
 
             # Compute losses using these 4 variables as the (labels, logits) arguments to the 2 loss functions
-            distillation_loss = cross_entropy_with_logits(labels=old_class_labels, logits=pred_old_classes)
-            classification_loss = cross_entropy_with_logits(labels=new_class_labels, logits=pred_new_classes)
+            distillation_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=old_class_labels, logits=pred_old_classes)
+            classification_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=new_class_labels, logits=pred_new_classes)
 
-            return tf.reduce_mean(tf.concat([alpha * distillation_loss, beta * classification_loss]), 1)
+            return tf.reduce_mean(tf.concat([alpha * distillation_loss, beta * classification_loss], axis=1))
         
         return iCarl_loss_fn
     
@@ -141,26 +158,31 @@ class iCaRL(ModuleNN):
         # DONE: In update_representation, create training_iter, val_iter for the images from the newly added labels, BUT only create trainig_iter for the images from the exemplar classes
         # DONE: Zip them together and construct the new dataset D
         # DONE: Train the model, where the loss function arguments and parameters are specified as vectors 
+        
+        new_train_data, new_train_labels = self.dataset.filter_dataset(
+        self.dataset.X_train, self.dataset.y_train, new_labels)
+
+        _, h, w, c = new_train_data.shape
 
         # transform the P exemplar sets into an iterator (the exemplar iterator)
-        all_exemplar_results = np.array([])
-        all_exemplar_data = np.array([])
+        all_exemplar_results = np.empty(shape=(0, self.dataset.get_default_num_classes()))
+        all_exemplar_data = np.empty(shape=(0, h, w, c))
         for exemplar_label in self.P.keys():
             exemplar_X_set = self.P[exemplar_label]
-            exemplar_results = model.predict(exemplar_X_set)
+            exemplar_results = self.icarl_model.predict(exemplar_X_set)
             all_exemplar_results = tf.concat([all_exemplar_results, exemplar_results], axis=0)
             all_exemplar_data = tf.concat([all_exemplar_data, exemplar_X_set], axis=0)
         VALID_SPLT = 0.20 # (!!!) to be included as an argument for the argument parser
         P_train_iter, P_valid_iter =  self.dataset.create_custom_iterators(all_exemplar_data, all_exemplar_results, valid_split=VALID_SPLT)
         
-        # The data associated with the new data extracted with them -> transform them into iterators
-        new_train_iter, new_valid_iter = self.dataset.get_iterators(new_labels)
+        all_train_data = np.concatenate((all_exemplar_data, new_train_data))
+        all_train_labels = np.concatenate((all_exemplar_results, new_train_labels))
 
         # Create the combined dataset D via combining the iterators for the dataset entries for the new labels with the old ones 
-        comb_train_iter = self.dataset.combine_generators(P_train_iter, new_train_iter)
-        comb_valid_iter = self.dataset.combine_generators(P_valid_iter, new_valid_iter)
+        train_iter, valid_iter = self.dataset.create_custom_iterators(
+            all_train_data, all_train_labels, valid_split=VALID_SPLT)
 
-        self.update_iterators(comb_train_iter, comb_valid_iter)
+        self.update_iterators(train_iter, valid_iter)
 
         ### Run the model & update parameters (encompassed within the delta parameter) ###
         custom_bs = None  # 128
@@ -235,14 +257,17 @@ class iCaRL(ModuleNN):
         self.K = K
         
         # Construct the iCaRL model by appending the feature map and the dense representation layer
-        self.icarl_model = models.Sequential(cls_model.model.layers[0], 
-                                             layers.Dense(units=self.default_num_labels, activation='sigmoid', name="incremental_classification_layer")
-                                             )
+        self.icarl_model = models.Sequential([cls_model.model.layers[0],
+                                              layers.Dense(
+                                                  units=self.default_num_labels,
+                                                  activation=None,
+                                                  name="incremental_classification_layer")]
+                                            )
         # Compile the iCaRL model
         self.custom_compile(loss=self.iCarl_loss_closure())
     
 if __name__ == "__main__":
     # This is the commands that I was executing leading to that error message
-    naiveCNN = NaiveCNN(GPU=True, ds_class_name=CIFAR10)
-    iCarlCNN = iCaRL(GPU=True, ds_class_name=CIFAR10, cls_model=naiveCNN)
+    naiveCNN = NaiveCNN.NaiveCNN(GPU=False, ds_class_name=CIFAR10)
+    iCarlCNN = iCaRL(GPU=False, ds_class_name=CIFAR10, cls_model=naiveCNN)
     IncrementalComparator.evaluate_class_acc_score(iCarlCNN, CIFAR10, start_size=2, increment_size=2)

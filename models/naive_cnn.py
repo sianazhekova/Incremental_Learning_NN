@@ -1,27 +1,29 @@
-import os,sys
+import os
+import sys
+from functools import partial
+
+import matplotlib.pyplot as plt
+
 import argparse
 import tensorflow as tf
 import tensorflow_addons as tfa
-from google.colab import drive
-drive.mount("/content/gdrive", force_remount=True)
-sys.path.append("/content/gdrive/My Drive/IncrementalNN")
 
-from tensorflow.keras import datasets, layers, models, losses, optimizers
-import matplotlib.pyplot as plt
-from functools import partial
+from tensorflow.keras import layers, models, losses, optimizers
+from models.module_nn import ModuleNN
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 print(tf.__version__)
 
-import dataset
-from dataset import Cifar10
-from tensorflow.keras.callbacks import History 
+import datasets
+
 
 # Global variables field
-ConvNN2D = partial(layers.Conv2D, kernel_size=3, activation='relu', padding="SAME")
+ConvNN2D = partial(layers.Conv2D, kernel_size=3, activation='relu', 
+                    padding="SAME")
 
 MaxPool2DPartial = partial(layers.MaxPooling2D, pool_size=2)
-AvrPool2DPartial = partial(layers.AveragePooling2D, pool_size=8, strides=None, padding="valid", data_format=None)
+AvrPool2DPartial = partial(layers.AveragePooling2D, pool_size=8, strides=None, 
+                            padding="valid", data_format=None)
 
 def plot_accuracy_loss_epoch(history, model, num_epochs, loss_option=True):
     train_loss_score = history.history['loss']
@@ -31,14 +33,14 @@ def plot_accuracy_loss_epoch(history, model, num_epochs, loss_option=True):
     validation_acc_score = history.history['val_accuracy']
 
     x_axis_epochs = range(num_epochs)
-    plt.figure(figsize=(9,9))
-    plt.subplot(1,2,1)
+    plt.figure(figsize=(9, 9))
+    plt.subplot(1, 2, 1)
     plt.plot(x_axis_epochs, train_acc_score, label='Training Accuracy')
     plt.plot(x_axis_epochs, validation_acc_score, label='Validation Accuracy')
     plt.legend(loc='upper left')
     plt.title('Training and Validation Accuracy vs Number of Epochs')
 
-    plt.subplot(1,2,2)
+    plt.subplot(1, 2, 2)
     plt.plot(x_axis_epochs, train_loss_score, label='Training Loss')
     plt.plot(x_axis_epochs, validation_loss_score, label='Validation Loss')
     plt.legend(loc='lower left')
@@ -51,7 +53,9 @@ class NaiveCNN(ModuleNN):
     def construct_cnn_v2(self):
         """ Construction & Layering of CNN"""
         feature_extractor = models.Sequential([
-            ConvNN2D(filters=64, kernel_size=3, input_shape=[self.img_height, self.img_width, self.num_channels]),
+            ConvNN2D(filters=64, kernel_size=3,
+                    input_shape=[self.img_height, self.img_width, 
+                                self.num_channels]),
             layers.BatchNormalization(),
             ConvNN2D(filters=64, kernel_size=3),
             layers.BatchNormalization(),
@@ -72,13 +76,16 @@ class NaiveCNN(ModuleNN):
             AvrPool2DPartial(),
             layers.Flatten()
         ], name="feature_map")
-        classification_layer = layers.Dense(units=self.default_num_labels, activation='softmax', name="simple_classification_layer")
+        classification_layer = layers.Dense(units=self.default_num_labels, 
+                                            activation='softmax',
+                                            name="simple_classification_layer")
         
         model = models.Sequential([feature_extractor, classification_layer])
         model.summary()
         return model
 
-    def configure_optimizers(self, select_optimizer, lr=None, momentum=None, weight_decay=None):
+    def configure_optimizers(self, select_optimizer, lr=None, momentum=None,
+                            weight_decay=None):
         """ Selection of Optimizer Based on Indicated String Argument """
         if select_optimizer == "adam":
             lr = 0.01
@@ -86,35 +93,53 @@ class NaiveCNN(ModuleNN):
         elif select_optimizer == "SGDW":
             """ Hyper-parameter Setting for this option: lr = 0.1 , momentum = 0.9, weight_decay = 10^(-4) , epoch_num = 200, batch size = 256 """
             lr = 0.01
-            num_steps = 80 * int(self.X_train.shape[0]/32)
-            select_optimizer = tfa.optimizers.SGDW(learning_rate=optimizers.schedules.PiecewiseConstantDecay(boundaries=[num_steps, num_steps], values=[lr, (lr*0.1), (lr*0.1)]), momentum=0.9, weight_decay=1) #TODO: for SGDW, loss_fun should be sparse categorical cross-entropy(?)
+            num_steps = 80 * int(self.X_train.shape[0] / 32)
+            select_optimizer = tfa.optimizers.SGDW(
+                learning_rate=optimizers.schedules.PiecewiseConstantDecay(
+                    boundaries=[num_steps, num_steps],
+                    values=[lr, (lr*0.1), (lr*0.1)]), momentum=0.9,
+                weight_decay=1) #TODO: for SGDW, loss_fun should be sparse categorical cross-entropy(?)
         elif select_optimizer == "SGD":
             lr = 0.01
-            num_steps = 80 * int(self.X_train.shape[0]/32)
-            select_optimizer = optimizers.SGD(learning_rate=optimizers.schedules.PiecewiseConstantDecay(boundaries=[num_steps, num_steps], values=[lr, (lr*0.1), (lr*0.1)]), momentum=0.9)
+            num_steps = 80 * int(self.X_train.shape[0] / 32)
+            select_optimizer = optimizers.SGD(
+                learning_rate=optimizers.schedules.PiecewiseConstantDecay(
+                    boundaries=[num_steps, num_steps],
+                    values=[lr, (lr*0.1), (lr*0.1)]), momentum=0.9)
         else:
-            raise OptimizerInputError(select_optimizer, "Invalid argument string name of optimizer")
+            raise OptimizerInputError(select_optimizer,
+                                    "Invalid argument string name of optimizer")
         
         return select_optimizer
 
-    def custom_compile(self, loss='categorical_crossentropy', select_optimizer='adam', metrics_options=['accuracy']):
+    def custom_compile(self, loss='categorical_crossentropy', 
+                        select_optimizer='adam', metrics_options=['accuracy']):
         """ Model Compilation Stage """
         # Selection of optimizer based on indicated string argument
         optimizer_to_use = self.configure_optimizers(select_optimizer)
 
-        self.model.compile(optimizer=optimizer_to_use, loss=loss, metrics=metrics_options)
+        
+        self.model.compile(optimizer=optimizer_to_use, loss=loss,
+                        metrics=metrics_options)
     
 
-    def training_step(self, num_epochs, plot_verbose=True, loss_option=True, custom_bs=None):
+    def training_step(self, num_epochs, plot_verbose=True, loss_option=True,
+                    custom_bs=None):
         """ Model Training Stage """
-        print(f"The length of the training dataset numpyarray iterator is {self.train_iter.__len__()}")
+        print(
+            f"The length of the training dataset numpyarray iterator is {self.train_iter.__len__()}")
         if custom_bs == None:
             custom_bs = self.dataset.get_batch_size()
-        self.history = self.model.fit(self.train_iter, batch_size=custom_bs, epochs = num_epochs, validation_data=self.valid_iter, callbacks=[self.history])
-        self.test_score = self.model.evaluate(self.X_test, self.y_test, verbose=2)  #test_loss,test_acc -> will need these for the sequential class addition performance evaluation
+        self.history = self.model.fit(self.train_iter, batch_size=custom_bs,
+                                    epochs = num_epochs,
+                                    validation_data=self.valid_iter,
+                                    callbacks=[self.history])
+        self.test_score = self.model.evaluate(self.X_test, self.y_test,
+                                            verbose=2)  #test_loss,test_acc -> will need these for the sequential class addition performance evaluation
         print(self.history.history.keys())
         if plot_verbose:
-            plot_accuracy_loss_epoch(self.history, self.model, num_epochs, loss_option)
+            plot_accuracy_loss_epoch(self.history, self.model, num_epochs, 
+                                    loss_option)
 
 
     def fit_GPU(self, num_epochs=200, plot_verbose=True):

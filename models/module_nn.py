@@ -1,4 +1,8 @@
 # Abstract Superclass for NiaveCNN, iCaRL, EWC and any other models extending these defining the protocol of model initialisation & loading 
+from abc import ABC, abstractmethod
+
+from tensorflow.python.keras.callbacks import History
+
 
 class ModuleNN(ABC):
     
@@ -22,7 +26,8 @@ class ModuleNN(ABC):
         self.history = History()
     
     @abstractmethod
-    def configure_optimizers(self, select_optimizer, lr, momentum, weight_decay):
+    def configure_optimizers(self, select_optimizer, lr, momentum, 
+                            weight_decay):
         pass
 
     @abstractmethod
