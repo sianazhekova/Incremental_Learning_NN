@@ -273,5 +273,5 @@ class iCaRL(ModuleNN):
 if __name__ == "__main__":
     # This is the commands that I was executing leading to that error message
     naiveCNN = NaiveCNN.NaiveCNN(GPU=False, ds_class_name=CIFAR10)
-    iCarlCNN = iCaRL(GPU=False, ds_class_name=CIFAR10, cls_model=naiveCNN)
+    iCarlCNN = iCaRL(GPU=True, ds_class_name=CIFAR10, cls_model=naiveCNN)
     IncrementalComparator.evaluate_class_acc_score(iCarlCNN, CIFAR10, start_size=2, increment_size=2)
