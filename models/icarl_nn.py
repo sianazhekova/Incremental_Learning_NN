@@ -34,7 +34,7 @@ class iCaRL(ModuleNN):
         
         for key in self.P.keys():
             P_y =  self.P[key]
-            mu = 1/len(P_y) * tf.math.reduce_sum([tf.math,l2_normalize(feature_map.predict(p)) for p in P_y], axis=0)  # mean of exemplars
+            mu = 1/len(P_y) * tf.math.reduce_sum([tf.math.l2_normalize(feature_map.predict(p)) for p in P_y], axis=0)  # mean of exemplars
             mu = tf.math.normalize(mu)
 
             abs_diff = abs(model_prediction - mu)
