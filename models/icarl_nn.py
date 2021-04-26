@@ -14,6 +14,7 @@ from models.naive_cnn import plot_accuracy_loss_epoch
 from . import naive_cnn as NaiveCNN
 from models.module_nn import ModuleNN, OptimizerInputError
 
+
 class iCaRL(ModuleNN):
     
     def iCarl_classify(self, x, state="Image"):
@@ -255,7 +256,7 @@ class iCaRL(ModuleNN):
         
         # Memory Limit = total number of exemplars
         self.K = K
-        
+
         # Construct the iCaRL model by appending the feature map and the dense representation layer
         self.icarl_model = models.Sequential([cls_model.model.layers[0],
                                               layers.Dense(

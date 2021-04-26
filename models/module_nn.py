@@ -23,6 +23,9 @@ class ModuleNN(ABC):
         self.default_num_labels = None
 
         self.opt_GPU = GPU
+        if GPU==True:
+            gpus = tf.config.experimental.list_physical_devices('GPU')
+            tf.config.experimental.set_memory_growth(gpus[0], True)
         self.history = History()
     
     @abstractmethod
