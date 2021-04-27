@@ -225,7 +225,7 @@ class iCaRL(ModuleNN):
             pk = None
             exemplar_features_sum = tf.math.reduce_sum([tf.math.l2_normalize(feature_map.predict(tf.expand_dims(p, axis=0))[0], axis=1) for p in P_list[:k]], axis=0) # Check this !!!
             for enum_i, x in enumerate(X_set[label]):
-                abs_diff = abs(mu - tf.math.l2_normalize(1/k * (feature_map_table[enum_i] + exemplar_features_sum)), axis=1)   # CHECK THIS !!!
+                abs_diff = abs(mu - tf.math.l2_normalize(1/k * (feature_map_table[enum_i] + exemplar_features_sum), axis=1))   # CHECK THIS !!!
                 print(f"The abs_diff is {abs_diff} and its shape is {abs_diff.shape}")
                 if abs_diff < argmin_val:
                     argmin_val = abs_diff
