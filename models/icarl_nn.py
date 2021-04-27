@@ -219,7 +219,7 @@ class iCaRL(ModuleNN):
 
         self.P[label] = np.empty(shape=[m, self.img_height, self.img_width, self.num_channels])
         P_list = self.P[label]
-        print(f"The dimensions of P_list is {P_list.shape} and it contains {P_list}")
+        #print(f"The dimensions of P_list is {P_list.shape} and it contains {P_list}")
 
         for k in range(1, m+1):
             argmin_val = sys.maxsize
@@ -240,13 +240,8 @@ class iCaRL(ModuleNN):
         """ Reduction of Exemplar Sets """
         # Input: m -> target number of exemplars
         # Py = {p1, p2, ..., p|Py|} current exemplar set
-        P_new = np.empty(shape=[m, self.img_height, self.img_width, self.num_channels])
-        for enum_i, p in enumerate(self.P[y]):   # Here, we are selecting only the first m exemplars. We may implement another strategy for exemplar selection 
-            P_new[enum_i] = p
-            m-=1
-            if m == 0:
-                break
-        self.P[y] = P_new
+        
+        self.P[y] = self.P[y][:m]
     
 
     def __init__(self, GPU, ds_class_name, cls_model, K=2000):
