@@ -203,8 +203,11 @@ class iCaRL(ModuleNN):
         # Input: m target number of exemplars for new class
         mu = None
         n = len(X_set[label])
+        print(f"Size of X_set[label] is {n}")
+        print(f"Size of m is {m}")
         feature_map_table = {}
         feature_map = self.icarl_model.layers[0]
+        print("1")
 
         #enums_x_data = {} -> An alternative that can be used in case enumerate() does not iterate through the X set in the same order
         for enum_i, x in enumerate(X_set[label]):
@@ -213,27 +216,32 @@ class iCaRL(ModuleNN):
             if mu == None:
                 mu = tf.zeros(feature_map_table[enum_i].shape, tf.float32)
             mu += feature_map_table[enum_i]
-        
+        print("2")
         mu = mu/n
         mu = tf.math.l2_normalize(mu)
 
         self.P[label] = np.empty(shape=[m, self.img_height, self.img_width, self.num_channels])
         P_list = self.P[label]
         #print(f"The dimensions of P_list is {P_list.shape} and it contains {P_list}")
-
+        print("3")
         for k in range(1, m+1):
             argmin_val = sys.maxsize
+            print("3.1")
             pk = None
             exemplar_features_sum = tf.math.reduce_sum([tf.math.l2_normalize(feature_map.predict(tf.expand_dims(p, axis=0))[0]) for p in P_list[:k]], axis=0) # Check this !!!
+            print("3.2")
             for enum_i, x in enumerate(X_set[label]):
+                print("3.3")
                 abs_diff = tf.norm(mu - tf.math.l2_normalize(1/k * (feature_map_table[enum_i] + exemplar_features_sum)))   # CHECK THIS !!!
                 #print(f"The abs_diff is {abs_diff} and its shape is {abs_diff.shape}")
                 if abs_diff < argmin_val:
                     argmin_val = abs_diff
                     pk = x
+                print("3.4")
             P_list[k-1] = pk
-
+        print("4")
         assert len(self.P[label]) == m
+        print("5")
     
 
     def reduce_exemplar_set(self, y, m):
@@ -271,6 +279,6 @@ class iCaRL(ModuleNN):
     
 if __name__ == "__main__":
     # This is the commands that I was executing leading to that error message
-    naiveCNN = NaiveCNN.NaiveCNN(GPU=True, ds_class_name=CIFAR10)
-    iCarlCNN = iCaRL(GPU=True, ds_class_name=CIFAR10, cls_model=naiveCNN)
+    naiveCNN = NaiveCNN.NaiveCNN(GPU=False, ds_class_name=CIFAR10)  #True
+    iCarlCNN = iCaRL(GPU=False, ds_class_name=CIFAR10, cls_model=naiveCNN)  #True
     IncrementalComparator.evaluate_class_acc_score(iCarlCNN, CIFAR10, start_size=2, increment_size=2)
