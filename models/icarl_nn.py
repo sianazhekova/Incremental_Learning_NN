@@ -217,7 +217,7 @@ class iCaRL(ModuleNN):
         mu = mu/n
         mu = tf.math.l2_normalize(mu)
 
-        self.P[label] = np.array([])
+        self.P[label] = np.empty(shape=[m, self.img_height, self.img_width, self.num_channels])
         P_list = self.P[label]
         print(f"The dimensions of P_list is {P_list.shape} and it contains {P_list}")
 
@@ -231,7 +231,7 @@ class iCaRL(ModuleNN):
                 if abs_diff < argmin_val:
                     argmin_val = abs_diff
                     pk = x
-            P_list = np.append(P_list, [pk], axis=0)
+            P_list[k-1] = pk
 
         assert len(self.P[label]) == m
     
@@ -240,9 +240,9 @@ class iCaRL(ModuleNN):
         """ Reduction of Exemplar Sets """
         # Input: m -> target number of exemplars
         # Py = {p1, p2, ..., p|Py|} current exemplar set
-        P_new = np.array([])
-        for p in self.P[y]:   # Here, we are selecting only the first m exemplars. We may implement another strategy for exemplar selection 
-            P_new = np.append(P_new, [p], axis=0)
+        P_new = np.empty(shape=[m, self.img_height, self.img_width, self.num_channels])
+        for enum_i, p in enumerate(self.P[y]):   # Here, we are selecting only the first m exemplars. We may implement another strategy for exemplar selection 
+            P_new[enum_i] = p
             m-=1
             if m == 0:
                 break
