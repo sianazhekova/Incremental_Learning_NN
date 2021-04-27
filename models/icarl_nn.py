@@ -201,7 +201,7 @@ class iCaRL(ModuleNN):
         # Require: current feature function of base NN: feature_map 
         # Input: Raw Image Set X = {x1, x2, ...., xn} of class label
         # Input: m target number of exemplars for new class
-        mu = 0
+        mu = None
         n = len(X_set[label])
         feature_map_table = {}
         feature_map = self.icarl_model.layers[0]
@@ -210,6 +210,8 @@ class iCaRL(ModuleNN):
         for enum_i, x in enumerate(X_set[label]):
             #enums_x_data[enum_i] = x
             feature_map_table[enum_i] = tf.math.l2_normalize(feature_map.predict(tf.expand_dims(x, axis=0)))[0]
+            if mu == None:
+                mu = tf.zeros(feature_map_table[enum_i].shape, tf.float32)
             mu += feature_map_table[enum_i]
         
         mu = mu/n
