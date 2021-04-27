@@ -23,7 +23,7 @@ class iCaRL(ModuleNN):
         # Require: P := {P1, P2, ..., P|P|} set of exemplar sets
         # Require: feature_map -> underlying NN
         feature_map = self.icarl_model.layer[0]
-        argmin_val = sys.maxint
+        argmin_val = sys.maxsize
         y_star = None
         
         model_prediction = None
@@ -221,7 +221,7 @@ class iCaRL(ModuleNN):
         P_list = self.P[label]
 
         for k in range(1, m+1):
-            argmin_val = sys.maxint
+            argmin_val = sys.maxsize
             pk = None
             exemplar_features_sum = tf.math.reduce_sum([tf.math.l2_normalize(feature_map.predict(tf.expand_dims(p, axis=0))[0]) for p in P_list[:k]], axis=0) # Check this !!!
             for enum_i, x in enumerate(X_set[label]):
