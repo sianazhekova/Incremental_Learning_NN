@@ -219,6 +219,7 @@ class iCaRL(ModuleNN):
 
         self.P[label] = np.array([])
         P_list = self.P[label]
+        print(f"The dimensions of P_list is {P_list.shape} and it contains {P_list}")
 
         for k in range(1, m+1):
             argmin_val = sys.maxsize
@@ -226,7 +227,7 @@ class iCaRL(ModuleNN):
             exemplar_features_sum = tf.math.reduce_sum([tf.math.l2_normalize(feature_map.predict(tf.expand_dims(p, axis=0))[0]) for p in P_list[:k]], axis=0) # Check this !!!
             for enum_i, x in enumerate(X_set[label]):
                 abs_diff = tf.norm(mu - tf.math.l2_normalize(1/k * (feature_map_table[enum_i] + exemplar_features_sum)))   # CHECK THIS !!!
-                print(f"The abs_diff is {abs_diff} and its shape is {abs_diff.shape}")
+                #print(f"The abs_diff is {abs_diff} and its shape is {abs_diff.shape}")
                 if abs_diff < argmin_val:
                     argmin_val = abs_diff
                     pk = x
