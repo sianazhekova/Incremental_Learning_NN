@@ -204,7 +204,7 @@ class iCaRL(ModuleNN):
         mu = 0
         n = len(X_set[label])
         feature_map_table = {}
-        feature_map = self.icarl_model.layer[0]
+        feature_map = self.icarl_model.layers[0]
 
         #enums_x_data = {} -> An alternative that can be used in case enumerate() does not iterate through the X set in the same order
         for enum_i, x in enumerate(X_set[label]):
