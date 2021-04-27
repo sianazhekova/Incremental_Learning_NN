@@ -82,7 +82,7 @@ class iCaRL(ModuleNN):
 
         self.update_representation(new_labels, num_epochs, plot_verbose, loss_option)
         t = len(new_labels)
-        m = self.K/t
+        m = int(self.K/t)
         for label in old_labels:
             self.reduce_exemplar_set(label, m)
         
