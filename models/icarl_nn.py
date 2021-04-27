@@ -209,7 +209,7 @@ class iCaRL(ModuleNN):
         #enums_x_data = {} -> An alternative that can be used in case enumerate() does not iterate through the X set in the same order
         for enum_i, x in enumerate(X_set[label]):
             #enums_x_data[enum_i] = x
-            feature_map_table[enum_i] = tf.math.l2_normalize(self.feature_map.predict(x))
+            feature_map_table[enum_i] = tf.math.l2_normalize(feature_map.predict(x))
             mu += feature_map_table[enum_i]
         
         mu = mu/n
