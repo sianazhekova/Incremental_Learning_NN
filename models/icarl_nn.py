@@ -14,6 +14,7 @@ from models.naive_cnn import plot_accuracy_loss_epoch
 from . import naive_cnn as NaiveCNN
 from models.module_nn import ModuleNN, OptimizerInputError
 
+#from utils.argument_parser import args_parse
 
 class iCaRL(ModuleNN):
     
@@ -81,7 +82,7 @@ class iCaRL(ModuleNN):
         old_labels = set(all_labels) - set(new_labels) 
 
         self.update_representation(new_labels, num_epochs, plot_verbose, loss_option)
-        t = len(new_labels)
+        t = len(all_labels)
         m = int(self.K/t)
         for label in old_labels:
             self.reduce_exemplar_set(label, m)
@@ -205,14 +206,19 @@ class iCaRL(ModuleNN):
         n = len(X_set[label])
         print(f"Size of X_set[label] is {n}")
         print(f"Size of m is {m}")
-        feature_map_table = {}
+        #feature_map_table = {}
+        feature_map_table = None
         feature_map = self.icarl_model.layers[0]
         print("1")
 
         #enums_x_data = {} -> An alternative that can be used in case enumerate() does not iterate through the X set in the same order
         for enum_i, x in enumerate(X_set[label]):
             #enums_x_data[enum_i] = x
-            feature_map_table[enum_i] = tf.math.l2_normalize(feature_map.predict(tf.expand_dims(x, axis=0)))[0]
+            l2_normalized_x = tf.math.l2_normalize(feature_map.predict(tf.expand_dims(x, axis=0)))[0]
+            if feature_map_table == None:
+                shape_np = l2_normalized_x.shape.numpy()
+                feature_map_table = np.empty(shape=([n, *shape_np]))
+            feature_map_table[enum_i] = l2_normalized_x
             if mu == None:
                 mu = tf.zeros(feature_map_table[enum_i].shape, tf.float32)
             mu += feature_map_table[enum_i]
@@ -230,14 +236,22 @@ class iCaRL(ModuleNN):
             pk = None
             exemplar_features_sum = tf.math.reduce_sum([tf.math.l2_normalize(feature_map.predict(tf.expand_dims(p, axis=0))[0]) for p in P_list[:k]], axis=0) # Check this !!!
             print("3.2")
+            scaled_features_sum = exemplar_features_sum / k
+            scaled_x = feature_map_table / k
+            differences = mu - (scaled_x + scaled_features_sum)
+            norms = tf.norm(differences, axis=1)
+            best_index = tf.math.argmin(norms)
+            pk = X_set[best_index]
+            """
             for enum_i, x in enumerate(X_set[label]):
                 print("3.3")
                 abs_diff = tf.norm(mu - tf.math.l2_normalize(1/k * (feature_map_table[enum_i] + exemplar_features_sum)))   # CHECK THIS !!!
-                #print(f"The abs_diff is {abs_diff} and its shape is {abs_diff.shape}")
                 if abs_diff < argmin_val:
                     argmin_val = abs_diff
                     pk = x
-                print("3.4")
+                
+                print("3.4") """
+            
             P_list[k-1] = pk
         print("4")
         assert len(self.P[label]) == m

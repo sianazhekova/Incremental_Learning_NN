@@ -180,28 +180,6 @@ class NaiveCNN(ModuleNN):
                 raise SystemError('GPU device not found')
             print('Found GPU at: {}'.format(device_name))
 
-""" This to be included in the utils
-def args_parse():
-    parser = argparse.ArgumentParser(description='Supply naive CNN with hyper-parameter configuration & options')
-    # will add for architecture/model used for the multiple models used
-    #The parameters for our model compilation
-    compile_env = parser.add_argument_group(title="Model Compilation")
-    compile_env.add_argument('--optimizer', '-o', default='adam', type=str, help='Choice of an optimzer to use when compiling the model during training and validation')
-    compile_env.add_argument('--learning-rate', '-lr', default=0.01, type=float, help='Select a learning rate for the model to use when updating weights during training')
-    compile_env.add_argument('--loss-fn', '-lf', default='categorical_crossentropy', type=str, help='Choise of a loss function to minimise and use during update step')
-    compile_env.add_argument('--metrics', '-me', default='categorical_accuracy', type=str, help='Metric to use for model compilation')
-    compile_env.add_argument('--momentum', '-mo', default=0.9, type=float, help='Momentum value to use in the special case of a Stochastic Gradient Descent with weight decay')
-    compile_env.add_argument('--weight_decay', '-wd', default=1, type=float, help='Weight decay value to use in the special case of a Stocastic Gradient Descent with weight decay')
-
-    #The parameters for our training dataset
-    train_ds_env = parser.add_argument_group(title="Parameters for Training Dataset")
-    train_ds_env.add_argument('--batch-size', '-b', default=32, type=int, help='Number of data instances per batch when multi-batching')
-    train_ds_env.add_argument('--num-epochs', '-e', default=200, type=int, help='Number of epochs to use during training')
-    train_ds_env.add_argument('--data-augment', '-da', default=False, type=bool, help='Option for including data augmentation for the training and validation datasets.')
-
-    args = parser.parse_args()
-    return args
-"""
 tf.keras.backend.clear_session
 """
 naiveCNN = NaiveCNN(GPU=True, ds_class_name=CIFAR10)
