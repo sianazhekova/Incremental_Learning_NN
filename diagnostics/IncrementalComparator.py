@@ -32,7 +32,7 @@ class IncrementalComparator:
                             acc_arr):
         model.update_iterators_test_set(ds_class_name, labels, new_labels)
 
-        model.fit_GPU(num_epochs=5, plot_verbose=False) # 50
+        model.fit_GPU(num_epochs=0, plot_verbose=False) # 50
         base_test_loss, base_test_acc = model.get_test_loss_acc()
         loss_arr.append(base_test_loss)
         acc_arr.append(base_test_acc)
