@@ -214,6 +214,7 @@ class iCaRL(ModuleNN):
         #enums_x_data = {} -> An alternative that can be used in case enumerate() does not iterate through the X set in the same order
         for enum_i, x in enumerate(X_set[label]):
             #enums_x_data[enum_i] = x
+            print(f"For iteration no: {enum_i}")
             l2_normalized_x = tf.math.l2_normalize(feature_map.predict(tf.expand_dims(x, axis=0)))[0]
             if feature_map_table is None:
                 shape_np = l2_normalized_x.shape.as_list()
