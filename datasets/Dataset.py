@@ -55,10 +55,10 @@ class Dataset(ABC):
     
     @classmethod
     def create_custom_iterators(cls, data, labels, valid_split):
-        print(f"The labels are {labels} and their dims are {labels.size}")
-        if data.size == 0:
+        #print(f"The labels are {labels} and their dims are {labels.size}")
+        if data.shape == 0:
             data = tf.constant([], shape=(0, 0, 0, 0))
-        if labels.size != 0:  # the list of labels is not empty
+        if labels.shape != 0:  # the list of labels is not empty
             scalar_classes = tf.math.argmax(labels, axis=1)
             print(
                 f"The scalar classes are {scalar_classes} and their dims are {scalar_classes.shape}")

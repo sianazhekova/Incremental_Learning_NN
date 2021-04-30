@@ -215,11 +215,11 @@ class iCaRL(ModuleNN):
         for enum_i, x in enumerate(X_set[label]):
             #enums_x_data[enum_i] = x
             l2_normalized_x = tf.math.l2_normalize(feature_map.predict(tf.expand_dims(x, axis=0)))[0]
-            if feature_map_table == None:
-                shape_np = l2_normalized_x.shape.numpy()
+            if feature_map_table is None:
+                shape_np = l2_normalized_x.shape.as_list()
                 feature_map_table = np.empty(shape=([n, *shape_np]))
             feature_map_table[enum_i] = l2_normalized_x
-            if mu == None:
+            if mu is None:
                 mu = tf.zeros(feature_map_table[enum_i].shape, tf.float32)
             mu += feature_map_table[enum_i]
         print("2")
@@ -228,20 +228,20 @@ class iCaRL(ModuleNN):
 
         self.P[label] = np.empty(shape=[m, self.img_height, self.img_width, self.num_channels])
         P_list = self.P[label]
-        #print(f"The dimensions of P_list is {P_list.shape} and it contains {P_list}")
         print("3")
         for k in range(1, m+1):
             argmin_val = sys.maxsize
-            print("3.1")
+            #print("3.1")
             pk = None
             exemplar_features_sum = tf.math.reduce_sum([tf.math.l2_normalize(feature_map.predict(tf.expand_dims(p, axis=0))[0]) for p in P_list[:k]], axis=0) # Check this !!!
-            print("3.2")
+            #print("3.2")
             scaled_features_sum = exemplar_features_sum / k
             scaled_x = feature_map_table / k
             differences = mu - (scaled_x + scaled_features_sum)
             norms = tf.norm(differences, axis=1)
-            best_index = tf.math.argmin(norms)
-            pk = X_set[best_index]
+            best_index = tf.keras.backend.eval(tf.math.argmin(norms))
+            #print(f"The best index is: {best_index}")
+            pk = X_set[label][best_index]
             """
             for enum_i, x in enumerate(X_set[label]):
                 print("3.3")
@@ -266,7 +266,7 @@ class iCaRL(ModuleNN):
         self.P[y] = self.P[y][:m]
     
 
-    def __init__(self, GPU, ds_class_name, cls_model, K=2000):
+    def __init__(self, GPU, ds_class_name, cls_model, K=200):
         """ Model Constructor & Hyper-/Parameter Initialisation """
         super(iCaRL, self).__init__(GPU, ds_class_name)
         
