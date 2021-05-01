@@ -238,7 +238,7 @@ class iCaRL(ModuleNN):
         mu = tf.math.l2_normalize(mu)"""
         for enum_i, x in enumerate(X_set[label]):
             #enums_x_data[enum_i] = x
-            print(f"For iteration no: {enum_i}")
+            #print(f"For iteration no: {enum_i}")
             l2_normalized_x = tf.math.l2_normalize(feature_map.predict(tf.expand_dims(x, axis=0)))[0]
             
             if feature_map_table is None:
@@ -248,7 +248,7 @@ class iCaRL(ModuleNN):
                 if mu is None:
                     mu = tf.zeros(feature_map_table[enum_i].shape, tf.float32)
                 mu += feature_map_table[enum_i]
-            print("2")
+            #print("2")
 
             mu = mu/n
             mu = tf.math.l2_normalize(mu)
@@ -256,7 +256,7 @@ class iCaRL(ModuleNN):
 
         self.P[label] = np.empty(shape=[m, self.img_height, self.img_width, self.num_channels])
         P_list = self.P[label]
-        print("3")
+        #print("3")
         for k in range(1, m+1):
             argmin_val = sys.maxsize
             #print("3.1")
@@ -281,9 +281,9 @@ class iCaRL(ModuleNN):
                 print("3.4") """
             
             P_list[k-1] = pk
-        print("4")
+        #print("4")
         assert len(self.P[label]) == m
-        print("5")
+        #print("5")
     
 
     def reduce_exemplar_set(self, y, m):
