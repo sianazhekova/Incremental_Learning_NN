@@ -223,7 +223,7 @@ class iCaRL(ModuleNN):
             l2_normalized_x_batch = tf.math.l2_normalize(feature_map.predict(x_batch))[0]
             if feature_map_table is None:
                 shape_np = l2_normalized_x_batch.shape.as_list()
-                feature_map_table = np.empty(shape=([int(n/256) + 1, *shape_np]))
+                feature_map_table = np.empty(shape=([int(n/256) + 2, *shape_np]))
             feature_map_table[batch_i] = l2_normalized_x_batch
             if mu is None:
                 mu = tf.zeros(feature_map_table[batch_i].shape, tf.float32)
