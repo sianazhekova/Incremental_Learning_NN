@@ -218,16 +218,17 @@ class iCaRL(ModuleNN):
             seed=None, data_format=None, save_to_dir=None, save_prefix='',
             save_format='png', subset=None, dtype=None
         )
-        
+        batch_i = 0
         for (x_batch, y_batch) in np_iter:
             l2_normalized_x_batch = tf.math.l2_normalize(feature_map.predict(x_batch))[0]
             if feature_map_table is None:
                 shape_np = l2_normalized_x_batch.shape.as_list()
                 feature_map_table = np.empty(shape=([n, *shape_np]))
-            feature_map_table[enum_i] = l2_normalized_x_batch
+            feature_map_table[batch_i] = l2_normalized_x_batch
             if mu is None:
-                mu = tf.zeros(feature_map_table[enum_i].shape, tf.float32)
-            mu += feature_map_table[enum_i]
+                mu = tf.zeros(feature_map_table[batch_i].shape, tf.float32)
+            mu += feature_map_table[batch_i]
+            count += 1
         
         mu = mu/n
         mu = tf.math.l2_normalize(mu)
