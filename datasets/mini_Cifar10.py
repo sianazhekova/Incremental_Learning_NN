@@ -4,6 +4,7 @@ import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import to_categorical
 from datasets.Dataset import Dataset
+from datasets.Cifar10 import CIFAR10
 
 class MiniCifar10(CIFAR10):
 
