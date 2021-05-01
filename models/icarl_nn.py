@@ -10,7 +10,7 @@ from datasets.Cifar10 import CIFAR10
 
 from diagnostics.IncrementalComparator import IncrementalComparator
 from models.naive_cnn import plot_accuracy_loss_epoch
-from tf.keras.preprocessing.image import NumpyArrayIterator
+from tensorflow.keras.preprocessing.image import NumpyArrayIterator
 
 from . import naive_cnn as NaiveCNN
 from models.module_nn import ModuleNN, OptimizerInputError
