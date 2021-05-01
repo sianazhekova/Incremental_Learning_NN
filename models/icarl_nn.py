@@ -220,6 +220,7 @@ class iCaRL(ModuleNN):
         )
         batch_i = 0
         for (x_batch, y_batch) in np_iter:
+            pritn(f"Thse size of the batch is {batch_i}")
             l2_normalized_x_batch = tf.math.l2_normalize(feature_map.predict(x_batch))[0]
             if feature_map_table is None:
                 shape_np = l2_normalized_x_batch.shape.as_list()
