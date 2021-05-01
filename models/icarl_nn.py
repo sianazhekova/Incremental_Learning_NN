@@ -10,7 +10,7 @@ from datasets.Cifar10 import CIFAR10
 
 from diagnostics.IncrementalComparator import IncrementalComparator
 from models.naive_cnn import plot_accuracy_loss_epoch
-from tensorflow.keras.preprocessing.image import NumpyArrayIterator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, NumpyArrayIterator
 
 from . import naive_cnn as NaiveCNN
 from models.module_nn import ModuleNN, OptimizerInputError
@@ -214,7 +214,7 @@ class iCaRL(ModuleNN):
 
         # enums_x_data = {} -> An alternative that can be used in case enumerate() does not iterate through the X set in the same order
         np_iter = NumpyArrayIterator(
-            X_set[label], np.empty(shape=[n]), None, batch_size=256, shuffle=False, sample_weight=None,
+            X_set[label], np.empty(shape=[n]), ImageDataGenerator(), batch_size=256, shuffle=False, sample_weight=None,
             seed=None, data_format=None, save_to_dir=None, save_prefix='',
             save_format='png', subset=None, dtype=None
         )
