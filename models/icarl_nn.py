@@ -321,6 +321,6 @@ class iCaRL(ModuleNN):
     
 if __name__ == "__main__":
     # This is the commands that I was executing leading to that error message    
-    naiveCNN = NaiveCNN.NaiveCNN(GPU=True, ds_class_name=CIFAR10)  #True
+    naiveCNN = NaiveCNN.NaiveCNN(GPU=True, ds_class_name=MiniCifar10)  #True
     iCarlCNN = iCaRL(GPU=True, ds_class_name=MiniCifar10, cls_model=naiveCNN)  #True
-    IncrementalComparator.evaluate_class_acc_score(iCarlCNN, MiniCIFAR10, start_size=2, increment_size=2)
+    IncrementalComparator.evaluate_class_acc_score(iCarlCNN, MiniCifar10, start_size=2, increment_size=2)
