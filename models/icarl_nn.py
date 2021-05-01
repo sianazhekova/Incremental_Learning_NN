@@ -219,7 +219,7 @@ class iCaRL(ModuleNN):
             save_format='png', subset=None, dtype=None
         )
         batch_i = 0
-        pritn(f"The numpy iterator has a size:{np_iter}")
+        print(f"The numpy iterator has a size:{np_iter}")
         for (x_batch, y_batch) in np_iter:
             print(f"Thse size of the batch is {batch_i}")
             l2_normalized_x_batch = tf.math.l2_normalize(feature_map.predict(x_batch))[0]
