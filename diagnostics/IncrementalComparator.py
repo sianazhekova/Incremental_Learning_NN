@@ -48,7 +48,7 @@ class IncrementalComparator:
         
     @classmethod
     def evaluate_class_acc_score(cls, model, ds_class, start_size=2,
-                                increment_size=2):
+                                increment_size=2, plot_enable=True):
         random.seed(0)
         # generator = model.get_data_generator()
         print("HERE")
@@ -93,5 +93,5 @@ class IncrementalComparator:
             cls.increment_class_set(ds_class, model, labels, new_labels,
                                     loss_arr, acc_arr)
             class_arr.append(num_classes)
-        
-        cls.plot_acc_loss_class(class_arr, acc_arr, loss_arr)
+        if plot_enable:
+            cls.plot_acc_loss_class(class_arr, acc_arr, loss_arr)
