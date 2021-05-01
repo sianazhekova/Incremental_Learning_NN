@@ -167,7 +167,6 @@ class NaiveCNN(ModuleNN):
         self.train_iter = None
         self.valid_iter = None
 
-        GOU = args. 
         super(NaiveCNN, self).__init__(GPU, ds_class_name)
 
         if ds_class_name != None:
