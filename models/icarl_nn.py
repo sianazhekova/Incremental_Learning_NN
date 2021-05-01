@@ -228,7 +228,7 @@ class iCaRL(ModuleNN):
             if mu is None:
                 mu = tf.zeros(feature_map_table[batch_i].shape, tf.float32)
             mu += feature_map_table[batch_i]
-            count += 1
+            batch_i += 1
         
         mu = mu/n
         mu = tf.math.l2_normalize(mu)
