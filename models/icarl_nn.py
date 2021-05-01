@@ -10,6 +10,7 @@ from datasets.Cifar10 import CIFAR10
 
 from diagnostics.IncrementalComparator import IncrementalComparator
 from models.naive_cnn import plot_accuracy_loss_epoch
+from tf.keras.preprocessing.image import NumpyArrayIterator
 
 from . import naive_cnn as NaiveCNN
 from models.module_nn import ModuleNN, OptimizerInputError
@@ -211,19 +212,23 @@ class iCaRL(ModuleNN):
         feature_map = self.icarl_model.layers[0]
         print("1")
 
-        #enums_x_data = {} -> An alternative that can be used in case enumerate() does not iterate through the X set in the same order
-        for enum_i, x in enumerate(X_set[label]):
-            #enums_x_data[enum_i] = x
-            print(f"For iteration no: {enum_i}")
-            l2_normalized_x = tf.math.l2_normalize(feature_map.predict(tf.expand_dims(x, axis=0)))[0]
+        # enums_x_data = {} -> An alternative that can be used in case enumerate() does not iterate through the X set in the same order
+        np_iter = NumpyArrayIterator(
+            X_set[label], np.empty(shape=[*X_set[label]]), None, batch_size=32, shuffle=False, sample_weight=None,
+            seed=None, data_format=None, save_to_dir=None, save_prefix='',
+            save_format='png', subset=None, dtype=None
+        )
+        
+        for (x_batch, y_batch) in np_iter:
+            l2_normalized_x_batch = tf.math.l2_normalize(feature_map.predict(tf.expand_dims(x_batch, axis=0)))[0]
             if feature_map_table is None:
-                shape_np = l2_normalized_x.shape.as_list()
+                shape_np = l2_normalized_x_batch.shape.as_list()
                 feature_map_table = np.empty(shape=([n, *shape_np]))
-            feature_map_table[enum_i] = l2_normalized_x
+            feature_map_table[enum_i] = l2_normalized_x_batch
             if mu is None:
                 mu = tf.zeros(feature_map_table[enum_i].shape, tf.float32)
             mu += feature_map_table[enum_i]
-        print("2")
+        
         mu = mu/n
         mu = tf.math.l2_normalize(mu)
 
