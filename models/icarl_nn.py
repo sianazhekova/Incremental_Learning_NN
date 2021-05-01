@@ -213,6 +213,7 @@ class iCaRL(ModuleNN):
         print("1")
 
         # enums_x_data = {} -> An alternative that can be used in case enumerate() does not iterate through the X set in the same order
+        """
         np_iter = NumpyArrayIterator(
             X_set[label], np.empty(shape=[n]), ImageDataGenerator(), batch_size=256, shuffle=False, sample_weight=None,
             seed=None, data_format=None, save_to_dir=None, save_prefix='',
@@ -233,7 +234,24 @@ class iCaRL(ModuleNN):
             batch_i += 1
         
         mu = mu/n
-        mu = tf.math.l2_normalize(mu)
+        mu = tf.math.l2_normalize(mu)"""
+        for enum_i, x in enumerate(X_set[label]):
+            #enums_x_data[enum_i] = x
+            print(f"For iteration no: {enum_i}")
+            l2_normalized_x = tf.math.l2_normalize(feature_map.predict(tf.expand_dims(x, axis=0)))[0]
+            
+            if feature_map_table is None:
+                shape_np = l2_normalized_x.shape.as_list()
+                feature_map_table = np.empty(shape=([n, *shape_np]))
+                feature_map_table[enum_i] = l2_normalized_x
+                if mu is None:
+                    mu = tf.zeros(feature_map_table[enum_i].shape, tf.float32)
+                mu += feature_map_table[enum_i]
+            print("2")
+
+            mu = mu/n
+            mu = tf.math.l2_normalize(mu)
+
 
         self.P[label] = np.empty(shape=[m, self.img_height, self.img_width, self.num_channels])
         P_list = self.P[label]
@@ -275,7 +293,7 @@ class iCaRL(ModuleNN):
         self.P[y] = self.P[y][:m]
     
 
-    def __init__(self, GPU, ds_class_name, cls_model, K=200):
+    def __init__(self, GPU, ds_class_name, cls_model, K=20):  # K = 2000
         """ Model Constructor & Hyper-/Parameter Initialisation """
         super(iCaRL, self).__init__(GPU, ds_class_name)
         
@@ -303,5 +321,5 @@ class iCaRL(ModuleNN):
 if __name__ == "__main__":
     # This is the commands that I was executing leading to that error message    
     naiveCNN = NaiveCNN.NaiveCNN(GPU=True, ds_class_name=CIFAR10)  #True
-    iCarlCNN = iCaRL(GPU=True, ds_class_name=CIFAR10, cls_model=naiveCNN)  #True
-    IncrementalComparator.evaluate_class_acc_score(iCarlCNN, CIFAR10, start_size=2, increment_size=2)
+    iCarlCNN = iCaRL(GPU=True, ds_class_name=MiniCIFAR10, cls_model=naiveCNN)  #True
+    IncrementalComparator.evaluate_class_acc_score(iCarlCNN, MiniCIFAR10, start_size=2, increment_size=2)

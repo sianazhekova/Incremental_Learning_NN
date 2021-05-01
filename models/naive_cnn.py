@@ -5,6 +5,7 @@ from functools import partial
 import matplotlib.pyplot as plt
 
 import argparse
+from utils.argument_parser import args_parse
 import tensorflow as tf
 import tensorflow_addons as tfa
 
@@ -162,10 +163,11 @@ class NaiveCNN(ModuleNN):
         self.valid_iter = valid_iter
     
 
-    def __init__(self, GPU, ds_class_name):
+    def __init__(self, args, ds_class_name):
         self.train_iter = None
         self.valid_iter = None
 
+        GOU = args. 
         super(NaiveCNN, self).__init__(GPU, ds_class_name)
 
         if ds_class_name != None:
@@ -181,11 +183,11 @@ class NaiveCNN(ModuleNN):
             print('Found GPU at: {}'.format(device_name))
 
 tf.keras.backend.clear_session
-"""
-naiveCNN = NaiveCNN(GPU=True, ds_class_name=CIFAR10)
-naiveCNN.generate_iterators()
-naiveCNN.compile_fit_GPU()
 
-test_loss, test_acc = naiveCNN.test_score
-print(f"The Loss for our model & test dataset is {test_loss} and the Accuracy for our model & test dataset is {test_acc} ")
-"""
+if __name__ == "__main__":
+    naiveCNN = NaiveCNN(GPU=True, ds_class_name=CIFAR10)
+    naiveCNN.generate_iterators()
+    naiveCNN.compile_fit_GPU()
+
+    test_loss, test_acc = naiveCNN.test_score
+    print(f"The Loss for our model & test dataset is {test_loss} and the Accuracy for our model & test dataset is {test_acc} ")
