@@ -7,6 +7,7 @@ import tensorflow_addons as tfa
 from tensorflow.keras import losses, layers, models, optimizers
 
 from datasets.Cifar10 import CIFAR10
+from datasets.mini_Cifar10 import MiniCifar10
 
 from diagnostics.IncrementalComparator import IncrementalComparator
 from models.naive_cnn import plot_accuracy_loss_epoch
