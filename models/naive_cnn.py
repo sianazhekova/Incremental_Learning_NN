@@ -163,7 +163,7 @@ class NaiveCNN(ModuleNN):
         self.valid_iter = valid_iter
     
 
-    def __init__(self, args, ds_class_name):
+    def __init__(self, GPU, ds_class_name):
         self.train_iter = None
         self.valid_iter = None
 
