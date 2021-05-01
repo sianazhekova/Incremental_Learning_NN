@@ -223,7 +223,7 @@ class iCaRL(ModuleNN):
             l2_normalized_x_batch = tf.math.l2_normalize(feature_map.predict(x_batch))[0]
             if feature_map_table is None:
                 shape_np = l2_normalized_x_batch.shape.as_list()
-                feature_map_table = np.empty(shape=([n, *shape_np]))
+                feature_map_table = np.empty(shape=([int(n/256) + 1, *shape_np]))
             feature_map_table[batch_i] = l2_normalized_x_batch
             if mu is None:
                 mu = tf.zeros(feature_map_table[batch_i].shape, tf.float32)
@@ -299,7 +299,7 @@ class iCaRL(ModuleNN):
         self.custom_compile(loss=self.iCarl_loss_closure())
     
 if __name__ == "__main__":
-    # This is the commands that I was executing leading to that error message
-    naiveCNN = NaiveCNN.NaiveCNN(GPU=False, ds_class_name=CIFAR10)  #True
-    iCarlCNN = iCaRL(GPU=False, ds_class_name=CIFAR10, cls_model=naiveCNN)  #True
+    # This is the commands that I was executing leading to that error message    
+    naiveCNN = NaiveCNN.NaiveCNN(GPU=True, ds_class_name=CIFAR10)  #True
+    iCarlCNN = iCaRL(GPU=True, ds_class_name=CIFAR10, cls_model=naiveCNN)  #True
     IncrementalComparator.evaluate_class_acc_score(iCarlCNN, CIFAR10, start_size=2, increment_size=2)
