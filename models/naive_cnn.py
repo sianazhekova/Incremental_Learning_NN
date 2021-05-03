@@ -15,7 +15,11 @@ from models.module_nn import ModuleNN
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 print(tf.__version__)
 
-import datasets
+from datasets.Dataset import Dataset
+from datasets.MNIST import MNIST
+from datasets.mini_Cifar10 import MiniCifar10
+#from datasets.Cifar10 import CIFAR10
+#from datasets.Cifar100 import CIFAR100
 
 
 # Global variables field
@@ -51,8 +55,8 @@ def plot_accuracy_loss_epoch(history, model, num_epochs, loss_option=True):
 
 class NaiveCNN(ModuleNN):
 
-    def construct_cnn_v2(self):
-        """ Construction & Layering of CNN"""
+    def build_model_cnn(self):
+        """ Construction & Layering of CNN handling CIFAR10 or CIFAR100 datasets, or their sub-classes """
         feature_extractor = models.Sequential([
             ConvNN2D(filters=64, kernel_size=3,
                     input_shape=[self.img_height, self.img_width, 
@@ -84,7 +88,21 @@ class NaiveCNN(ModuleNN):
         model = models.Sequential([feature_extractor, classification_layer])
         model.summary()
         return model
-
+    
+    def build_model_mlp(self):
+        """ Construction & Layering of a Simple Multi-Layer Perceptron for MNIST """
+        feature_extractor = models.Sequential([
+            layers.Flatten(input_shape=(28, 28)),
+            layers.Dense(100, activation='relu'),
+            layers.Dense(100, activation='relu')
+        ], name="feature_map")
+        
+        classification_layer = layers.Dense(10, activation='softmax')
+        
+        model = models.Sequential([feature_extractor, classification_layer])
+        model.summary() 
+        return model
+    
     def configure_optimizers(self, select_optimizer, lr=None, momentum=None,
                             weight_decay=None):
         """ Selection of Optimizer Based on Indicated String Argument """
@@ -123,6 +141,15 @@ class NaiveCNN(ModuleNN):
         self.model.compile(optimizer=optimizer_to_use, loss=loss,
                         metrics=metrics_options)
     
+    
+    #def save_weights(self):
+
+    
+    #def load_weights(self):
+
+
+# UP TO HERE: Defines the Model Template
+# After this line -> Add it to a Model-Trainer Template   
 
     def training_step(self, num_epochs, plot_verbose=True, loss_option=True,
                     custom_bs=None):
@@ -153,6 +180,13 @@ class NaiveCNN(ModuleNN):
             self.training_step(num_epochs, plot_verbose, custom_bs)
     
 
+    def get_iterators(self, valid_split=0.20, data=None, labels=None): # valid_split = args.valid_split
+        if data is None or labels is None:
+            return self.dataset.default_train_iterators(valid_split=valid_split)
+        else:
+            return self.dataset.create_custom_iterators(data, labels, valid_split)
+
+
     def update_iterators_test_set(self, ds_class_name, labels, new_labels):
         self.update_iterators(*ds_class_name.get_iterators(new_labels))
         self.update_test_set(*ds_class_name.get_test_set(labels))
@@ -172,7 +206,12 @@ class NaiveCNN(ModuleNN):
         if ds_class_name != None:
             self.default_num_labels = self.dataset.get_default_num_classes()
         
-        self.model = self.construct_cnn_v2()
+        if self.dataset in [MiniCifar10]:
+            self.model = self.build_model_cnn()
+        
+        if self.dataset in [MNIST]:
+            self.model = self.build_model_mlp()
+
         self.custom_compile()
 
         if self.opt_GPU:
@@ -184,9 +223,9 @@ class NaiveCNN(ModuleNN):
 tf.keras.backend.clear_session
 
 if __name__ == "__main__":
-    naiveCNN = NaiveCNN(GPU=True, ds_class_name=CIFAR10)
-    naiveCNN.generate_iterators()
-    naiveCNN.compile_fit_GPU()
+    naiveCNN = NaiveCNN(GPU=False, ds_class_name=MNIST)
+    naiveCNN.get_iterators()
+    naiveCNN.fit_GPU(num_epochs=10)
 
     test_loss, test_acc = naiveCNN.test_score
     print(f"The Loss for our model & test dataset is {test_loss} and the Accuracy for our model & test dataset is {test_acc} ")

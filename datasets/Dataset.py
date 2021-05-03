@@ -60,8 +60,8 @@ class Dataset(ABC):
             data = tf.constant([], shape=(0, 0, 0, 0))
         if labels.shape != 0:  # the list of labels is not empty
             scalar_classes = tf.math.argmax(labels, axis=1)
-            print(
-                f"The scalar classes are {scalar_classes} and their dims are {scalar_classes.shape}")
+            #print(
+            #    f"The scalar classes are {scalar_classes} and their dims are {scalar_classes.shape}")
             labels = to_categorical(scalar_classes,
                                     num_classes=cls.get_default_num_classes())
         else:
@@ -84,6 +84,9 @@ class Dataset(ABC):
 
         return train_iter, valid_iter
 
+    @classmethod
+    def default_train_iterators(cls, valid_split):
+        return cls.create_custom_iterators(data=cls.X_train, labels=cls.y_train, valid_split=valid_split)
     
     @staticmethod
     @abstractmethod

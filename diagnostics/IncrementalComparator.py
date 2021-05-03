@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import random
 import tensorflow as tf
+from utils.file_handling import *
 
 tf.keras.backend.clear_session
 
@@ -48,7 +49,7 @@ class IncrementalComparator:
         
     @classmethod
     def evaluate_class_acc_score(cls, model, ds_class, start_size=2,
-                                increment_size=2, plot_enable=True):
+                                increment_size=2, plot_enable=True, save_acc_loss=False):
         random.seed(0)
         # generator = model.get_data_generator()
         print("HERE")
@@ -93,5 +94,17 @@ class IncrementalComparator:
             cls.increment_class_set(ds_class, model, labels, new_labels,
                                     loss_arr, acc_arr)
             class_arr.append(num_classes)
+        
+        if save_acc_loss:
+            file_path = '' # TO-DO: use argument parser
+            
+            save_json(file_path, "class array", class_arr)
+            save_json(file_path, "loss array", loss_arr)
+            save_json(file_path, "accuracy array", acc_arr)
+
+        print(f"The class array is {class_arr}")
+        print(f"The loss array is {loss_arr}")
+        print(f"The accuracy array is {acc_arr}")
+
         if plot_enable:
             cls.plot_acc_loss_class(class_arr, acc_arr, loss_arr)
